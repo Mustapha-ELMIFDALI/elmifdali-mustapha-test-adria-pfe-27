@@ -1,0 +1,136 @@
+x-healthcheck: &healthcheck
+  interval: 10s
+  timeout: 5s
+  retries: 12
+  start_period: 60s
+
+x-eureka: &eureka
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+
+services:
+  discovery-service:
+    build:
+      context: .
+      dockerfile: discovery-service/Dockerfile
+    container_name: discovery-service
+    restart: on-failure
+    ports:
+      - "8761:8761"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-qO-", "http://localhost:8761/actuator/health"]
+    networks:
+      - bank-net
+
+  config-service:
+    build:
+      context: .
+      dockerfile: config-service/Dockerfile
+    container_name: config-service
+    restart: on-failure
+    environment:
+      <<: *eureka
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-qO-", "http://localhost:8888/actuator/health"]
+    networks:
+      - bank-net
+
+  account-service:
+    build:
+      context: .
+      dockerfile: account-service/Dockerfile
+    container_name: account-service
+    restart: on-failure
+    environment:
+      <<: *eureka
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health"]
+    networks:
+      - bank-net
+
+  transaction-service:
+    build:
+      context: .
+      dockerfile: transaction-service/Dockerfile
+    container_name: transaction-service
+    restart: on-failure
+    environment:
+      <<: *eureka
+      CONFIG_SERVER_URL: http://config-service:8888
+    depends_on:
+      config-service:
+        condition: service_healthy
+      account-service:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-qO-", "http://localhost:8082/actuator/health"]
+    networks:
+      - bank-net
+
+  chatbot-service:
+    build:
+      context: .
+      dockerfile: chatbot-service/Dockerfile
+    container_name: chatbot-service
+    restart: on-failure
+    environment:
+      <<: *eureka
+      ACCOUNT_MCP_URL: http://account-service:8081/mcp
+      TRANSACTION_MCP_URL: http://transaction-service:8082/mcp
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?Set GEMINI_API_KEY in .env}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+    depends_on:
+      account-service:
+        condition: service_healthy
+      transaction-service:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-qO-", "http://localhost:8090/actuator/health"]
+    networks:
+      - bank-net
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: gateway-service/Dockerfile
+    container_name: gateway-service
+    restart: on-failure
+    ports:
+      - "9999:9999"
+    environment:
+      <<: *eureka
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-qO-", "http://localhost:9999/actuator/health"]
+    networks:
+      - bank-net
+
+  angular-front:
+    build:
+      context: ./angular-front
+    container_name: angular-front
+    restart: on-failure
+    ports:
+      - "80:80"
+    depends_on:
+      gateway-service:
+        condition: service_healthy
+    networks:
+      - bank-net
+
+networks:
+  bank-net:
+    driver: bridge

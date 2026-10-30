@@ -1,6 +1,11 @@
-target/
+**/target/
+**/node_modules/
+**/.venv/
+**/dist/
 .mvn/wrapper/maven-wrapper.jar
 .git
 .gitignore
 .idea
+.env
+rapport/
 HELP.md

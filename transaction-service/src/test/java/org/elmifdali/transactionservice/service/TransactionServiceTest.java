@@ -2,6 +2,7 @@ package org.elmifdali.transactionservice.service;
 
 import org.elmifdali.transactionservice.domain.Transaction;
 import org.elmifdali.transactionservice.feign.AccountGateway;
+import org.elmifdali.transactionservice.messaging.TransactionCreatedEvent;
 import org.elmifdali.transactionservice.model.Account;
 import org.elmifdali.transactionservice.repository.TransactionRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -32,6 +34,9 @@ class TransactionServiceTest {
     @Mock
     private AccountGateway accountGateway;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     private TransactionService transactionService;
 
     private final UUID sourceId = UUID.randomUUID();
@@ -39,7 +44,7 @@ class TransactionServiceTest {
 
     @BeforeEach
     void setUp() {
-        transactionService = new TransactionService(transactionRepository, accountGateway, new BigDecimal("1000"));
+        transactionService = new TransactionService(transactionRepository, accountGateway, eventPublisher, new BigDecimal("1000"));
         lenient().when(transactionRepository.saveAndFlush(any())).thenAnswer(call -> call.getArgument(0));
     }
 
@@ -54,6 +59,7 @@ class TransactionServiceTest {
     private void assertRejected(CreateTransactionRequest request) {
         assertThrows(TransactionRejectedException.class, () -> transactionService.create(request));
         verify(transactionRepository, never()).saveAndFlush(any());
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
         verify(accountGateway, never()).debit(any(), org.mockito.ArgumentMatchers.anyDouble());
     }
 
@@ -65,6 +71,7 @@ class TransactionServiceTest {
 
         assertEquals(new BigDecimal("250.00"), transaction.getAmount());
         verify(accountGateway).debit(sourceId, 250.0);
+        verify(eventPublisher).publishEvent(any(TransactionCreatedEvent.class));
     }
 
     @Test

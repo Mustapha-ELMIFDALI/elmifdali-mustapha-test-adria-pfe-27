@@ -4,9 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.elmifdali.transactionservice.domain.Transaction;
 import org.elmifdali.transactionservice.domain.TransactionType;
 import org.elmifdali.transactionservice.feign.AccountGateway;
+import org.elmifdali.transactionservice.messaging.TransactionCreatedEvent;
 import org.elmifdali.transactionservice.model.Account;
 import org.elmifdali.transactionservice.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,13 +24,16 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final AccountGateway accountGateway;
+    private final ApplicationEventPublisher eventPublisher;
     private final BigDecimal maxAmount;
 
     public TransactionService(TransactionRepository transactionRepository,
                               AccountGateway accountGateway,
+                              ApplicationEventPublisher eventPublisher,
                               @Value("${bank.transaction.max-amount}") BigDecimal maxAmount) {
         this.transactionRepository = transactionRepository;
         this.accountGateway = accountGateway;
+        this.eventPublisher = eventPublisher;
         this.maxAmount = maxAmount;
     }
 
@@ -83,7 +88,7 @@ public class TransactionService {
     private Transaction record(UUID accountId, TransactionType type, BigDecimal amount, String currency,
                                String merchantCategory, String country) {
         // Flushed before the remote balance update so a database error cannot follow a debit
-        return transactionRepository.saveAndFlush(Transaction.builder()
+        Transaction transaction = transactionRepository.saveAndFlush(Transaction.builder()
                 .accountId(accountId)
                 .type(type)
                 .amount(amount)
@@ -92,6 +97,8 @@ public class TransactionService {
                 .country(country)
                 .createdAt(Instant.now())
                 .build());
+        eventPublisher.publishEvent(TransactionCreatedEvent.from(transaction));
+        return transaction;
     }
 
     private void refund(UUID accountId, double amount) {

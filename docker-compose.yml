@@ -8,6 +8,30 @@ x-eureka: &eureka
   EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
 
 services:
+  kafka:
+    image: apache/kafka:3.9.1
+    container_name: kafka
+    restart: on-failure
+    ports:
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null"]
+    networks:
+      - bank-net
+
   discovery-service:
     build:
       context: .
@@ -65,7 +89,10 @@ services:
     environment:
       <<: *eureka
       CONFIG_SERVER_URL: http://config-service:8888
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
+      kafka:
+        condition: service_healthy
       config-service:
         condition: service_healthy
       account-service:
@@ -73,6 +100,26 @@ services:
     healthcheck:
       <<: *healthcheck
       test: ["CMD", "wget", "-qO-", "http://localhost:8082/actuator/health"]
+    networks:
+      - bank-net
+
+  transaction-consumer-service:
+    build:
+      context: .
+      dockerfile: transaction-consumer-service/Dockerfile
+    container_name: transaction-consumer-service
+    restart: on-failure
+    environment:
+      <<: *eureka
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-qO-", "http://localhost:8083/actuator/health"]
     networks:
       - bank-net
 

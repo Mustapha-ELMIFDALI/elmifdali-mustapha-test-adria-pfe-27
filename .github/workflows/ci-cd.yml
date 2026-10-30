@@ -47,6 +47,7 @@ jobs:
           - gateway-service
           - account-service
           - transaction-service
+          - transaction-consumer-service
           - chatbot-service
     steps:
       - uses: actions/checkout@v4

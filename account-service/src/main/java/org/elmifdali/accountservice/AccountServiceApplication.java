@@ -17,9 +17,10 @@ public class AccountServiceApplication {
     @Bean
     CommandLineRunner seedAccounts(AccountService accountService) {
         return args -> {
-            accountService.create(new CreateAccountRequest("CUST-001", "MAD", 5000));
-            accountService.create(new CreateAccountRequest("CUST-002", "MAD", 12000));
-            accountService.create(new CreateAccountRequest("CUST-003", "EUR", 3000));
+            String customer = "Mustapha Elmifdali - mustaphamifdali2001@gmail.com";
+            accountService.create(new CreateAccountRequest(customer + " - 01", "MAD", 5000));
+            accountService.create(new CreateAccountRequest(customer + " - 02", "MAD", 12000));
+            accountService.create(new CreateAccountRequest(customer + " - 03", "EUR", 3000));
         };
     }
 }

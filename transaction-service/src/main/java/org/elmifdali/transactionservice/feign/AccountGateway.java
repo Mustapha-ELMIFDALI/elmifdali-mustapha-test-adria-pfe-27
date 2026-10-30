@@ -3,6 +3,7 @@ package org.elmifdali.transactionservice.feign;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.elmifdali.transactionservice.model.Account;
 import org.elmifdali.transactionservice.model.AmountRequest;
 import org.elmifdali.transactionservice.service.AccountNotFoundException;
@@ -15,6 +16,7 @@ import java.util.UUID;
 // The fallbacks fail closed: without the real account a transaction must be refused, never approved
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class AccountGateway {
 
     private static final String ACCOUNT_SERVICE = "accountService";
@@ -50,6 +52,7 @@ public class AccountGateway {
         if (cause instanceof AccountNotFoundException || cause instanceof TransactionRejectedException) {
             return (RuntimeException) cause;
         }
+        log.warn("Account service call failed: {}", cause.toString());
         return new AccountServiceUnavailableException(cause);
     }
 }

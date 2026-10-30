@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.UUID;
 
-@FeignClient(name = "account-service", url = "${account-service.url}", path = "/accounts")
+@FeignClient(name = "account-service", path = "/accounts")
 public interface AccountRestClient {
 
     @GetMapping("/{id}")

@@ -1,0 +1,17 @@
+<nav class="navbar navbar-expand bg-primary" data-bs-theme="dark">
+  <div class="container">
+    <a class="navbar-brand fw-semibold" routerLink="/accounts">
+      <i class="bi bi-bank me-1"></i> E-Bank
+    </a>
+    <ul class="navbar-nav me-auto">
+      <li class="nav-item"><a class="nav-link" routerLink="/accounts" routerLinkActive="active">Comptes</a></li>
+      <li class="nav-item"><a class="nav-link" routerLink="/transactions" routerLinkActive="active">Transactions</a></li>
+      <li class="nav-item"><a class="nav-link" routerLink="/bot" routerLinkActive="active">Assistant</a></li>
+    </ul>
+    <span class="navbar-text small">Mustapha Elmifdali · mustaphamifdali2001&#64;gmail.com</span>
+  </div>
+</nav>
+
+<main class="container py-4">
+  <router-outlet></router-outlet>
+</main>

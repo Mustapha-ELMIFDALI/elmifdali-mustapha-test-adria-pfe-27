@@ -1,0 +1,14 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
+@import "bootstrap-icons/font/bootstrap-icons.min.css";
+
+body {
+  background-color: #f5f7fa;
+}
+
+.chat-message {
+  max-width: 75%;
+}
+
+.chat-message p:last-child {
+  margin-bottom: 0;
+}

@@ -1,0 +1,91 @@
+<h2 class="h4 mb-3">Transactions</h2>
+
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+@if (success()) {
+  <div class="alert alert-success">{{ success() }}</div>
+}
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <form class="card h-100 shadow-sm" #paymentForm="ngForm" (ngSubmit)="submitPayment()">
+      <div class="card-body">
+        <h3 class="h6 card-title">Nouveau paiement</h3>
+        <select class="form-select mb-2" name="accountId" aria-label="Compte" [(ngModel)]="payment.accountId" required>
+          <option value="" disabled>Compte</option>
+          @for (account of accounts(); track account.id) {
+            <option [value]="account.id">{{ label(account) }}</option>
+          }
+        </select>
+        <input class="form-control mb-2" type="number" name="amount" placeholder="Montant" aria-label="Montant"
+               min="0.01" step="0.01" [(ngModel)]="payment.amount" required>
+        <div class="row g-2 mb-3">
+          <div class="col">
+            <input class="form-control" name="merchantCategory" placeholder="Catégorie" aria-label="Catégorie"
+                   [(ngModel)]="payment.merchantCategory" required>
+          </div>
+          <div class="col">
+            <input class="form-control" name="country" placeholder="Pays" aria-label="Pays"
+                   [(ngModel)]="payment.country" required>
+          </div>
+        </div>
+        <button class="btn btn-primary" type="submit" [disabled]="paymentForm.invalid">Payer</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-md-6">
+    <form class="card h-100 shadow-sm" #transferForm="ngForm" (ngSubmit)="submitTransfer()">
+      <div class="card-body">
+        <h3 class="h6 card-title">Nouveau virement</h3>
+        <select class="form-select mb-2" name="fromAccountId" aria-label="Compte source"
+                [(ngModel)]="transfer.fromAccountId" required>
+          <option value="" disabled>Compte source</option>
+          @for (account of accounts(); track account.id) {
+            <option [value]="account.id">{{ label(account) }}</option>
+          }
+        </select>
+        <select class="form-select mb-2" name="toAccountId" aria-label="Compte destination"
+                [(ngModel)]="transfer.toAccountId" required>
+          <option value="" disabled>Compte destination</option>
+          @for (account of accounts(); track account.id) {
+            <option [value]="account.id">{{ label(account) }}</option>
+          }
+        </select>
+        <input class="form-control mb-3" type="number" name="amount" placeholder="Montant" aria-label="Montant"
+               min="0.01" step="0.01" [(ngModel)]="transfer.amount" required>
+        <button class="btn btn-primary" type="submit" [disabled]="transferForm.invalid">Virer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle bg-white shadow-sm">
+    <thead class="table-light">
+      <tr>
+        <th>Date</th>
+        <th>Compte</th>
+        <th>Type</th>
+        <th class="text-end">Montant</th>
+        <th>Catégorie</th>
+        <th>Pays</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (transaction of latestFirst(); track transaction.id) {
+        <tr>
+          <td>{{ transaction.createdAt | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+          <td>{{ accountNumber(transaction.accountId) }}</td>
+          <td>{{ transaction.type }}</td>
+          <td class="text-end fw-semibold">{{ transaction.amount | number: '1.2-2' }} {{ transaction.currency }}</td>
+          <td>{{ transaction.merchantCategory ?? '-' }}</td>
+          <td>{{ transaction.country ?? '-' }}</td>
+        </tr>
+      } @empty {
+        <tr><td colspan="6" class="text-center py-4">Aucune transaction.</td></tr>
+      }
+    </tbody>
+  </table>
+</div>

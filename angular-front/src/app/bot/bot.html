@@ -1,0 +1,30 @@
+<h2 class="h4 mb-3">Assistant bancaire</h2>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    @for (message of messages(); track $index) {
+      <div class="d-flex mb-2" [class.justify-content-end]="message.fromUser">
+        <div class="rounded px-3 py-2 chat-message"
+             [class.text-bg-primary]="message.fromUser" [class.bg-body-secondary]="!message.fromUser">
+          @if (message.fromUser) {
+            {{ message.text }}
+          } @else {
+            <markdown [data]="message.text"></markdown>
+          }
+        </div>
+      </div>
+    } @empty {
+      <p class="text-secondary mb-0">Posez une question sur vos comptes, ou demandez un paiement ou un virement.</p>
+    }
+    @if (waiting()) {
+      <div class="spinner-border spinner-border-sm text-primary mt-2" role="status">
+        <span class="visually-hidden">L'assistant répond...</span>
+      </div>
+    }
+  </div>
+  <form class="card-footer d-flex gap-2" (ngSubmit)="send()">
+    <input class="form-control" name="query" placeholder="Votre message" aria-label="Votre message"
+           autocomplete="off" [(ngModel)]="query">
+    <button class="btn btn-primary" type="submit" [disabled]="waiting()">Envoyer</button>
+  </form>
+</div>

@@ -1,0 +1,35 @@
+Transactions : 5000
+Fraudes : 257 (5.14%)
+Valeurs manquantes :
+transaction_id             0
+account_id                 0
+amount                     0
+hour                       0
+country                   66
+merchant_category         84
+transactions_last_24h      0
+average_amount_last_7d    75
+is_fraud                   0
+Entraînement : 4000 lignes, test : 1000 lignes dont 51 fraudes
+Average precision en validation croisée : 0.176
+Seuil choisi sur l'entraînement : 0.773
+
+Effet du seuil (entraînement) :
+  seuil 0.2 : précision 0.055, rappel 0.966, alertes 3643
+  seuil 0.3 : précision 0.064, rappel 0.898, alertes 2888
+  seuil 0.4 : précision 0.079, rappel 0.738, alertes 1924
+  seuil 0.5 : précision 0.111, rappel 0.592, alertes 1104
+  seuil 0.6 : précision 0.143, rappel 0.408, alertes 589
+  seuil 0.7 : précision 0.198, rappel 0.296, alertes 308
+  seuil 0.8 : précision 0.262, rappel 0.218, alertes 172
+
+Évaluation sur le test, classe fraude :
+  Précision : 0.208
+  Rappel : 0.196
+  F1-score : 0.202
+  Average precision : 0.184 (hasard : 0.051)
+Matrice de confusion [[normales OK, fausses alertes], [fraudes manquées, fraudes détectées]] :
+[[911  38]
+ [ 41  10]]
+Accuracy : 92.10%
+Accuracy d'un modèle qui ne détecte jamais rien : 94.90%
